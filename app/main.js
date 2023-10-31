@@ -1,9 +1,15 @@
 const net = require("net");
 const fs = require('fs');
 
-// Read --directory
-const args = process.argv.slice(2);
-const directory = args[0];
+// Read --directory argument
+const args = process.argv.splice(2);
+let directory = undefined;
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--directory') {
+    directory = args[i + 1];
+  }
+}
+
 
 function generateResponse(statusCode, statusDescription, headers, body) {
   const statusLine = `HTTP/1.1 ${statusCode} ${statusDescription}`;
@@ -58,6 +64,12 @@ const server = net.createServer((socket) => {
     } else if (path.startsWith("/files/") && method === 'GET') {
       const fileName = path.slice(7);
       const filePath = `${directory}/${fileName}`;
+      if (fs.existsSync(filePath) === false) {
+        socket.write(generateResponse(404, 'Not Found'));
+        socket.end();
+        return;
+      }
+      
       // Read file and return as application/octet-stream
       const fileContent = fs.readFileSync(filePath);
       const fileLength = Buffer.byteLength(fileContent);
