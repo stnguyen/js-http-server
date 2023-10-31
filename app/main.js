@@ -4,8 +4,8 @@ function generateResponse(statusCode, statusDescription, headers, body) {
   const statusLine = `HTTP/1.1 ${statusCode} ${statusDescription}`;
   const headerLines = Object.entries(headers || []).map(([key, value]) => `${key}: ${value}`);
   const headerBlock = headerLines.join("\r\n");
-  const bodyBlock = body ? `\r\n\r\n${body}` : '';
-  const response = `${statusLine}\r\n${headerBlock}${bodyBlock}\r\n`;
+  const bodyBlock = body ? `\r\n${body}` : '';
+  const response = `${statusLine}\r\n${headerBlock}\r\n${bodyBlock}`;
   return response;
 }
 
@@ -48,7 +48,7 @@ const server = net.createServer((socket) => {
         'Content-Length': msgLength,
       }, msg));
     } else {
-      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      socket.write(generateResponse(404, 'Not Found'));
     }
 
     socket.end();
