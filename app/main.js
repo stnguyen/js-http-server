@@ -1,5 +1,5 @@
 const net = require("net");
-const fs = require('fs');
+const fs = require('fs').promises;
 
 // Read --directory argument
 const args = process.argv.splice(2);
@@ -21,7 +21,7 @@ function generateResponse(statusCode, statusDescription, headers, body) {
 }
 
 const server = net.createServer((socket) => {
-  socket.on('data' , (data) => {
+  socket.on('data', async (data) => {
     // Parse first line as HTTP request start line
     const lines = data.toString().split('\r\n');
     const startLine = lines[0];
@@ -64,26 +64,33 @@ const server = net.createServer((socket) => {
     } else if (path.startsWith("/files/") && method === 'GET') {
       const fileName = path.slice(7);
       const filePath = `${directory}/${fileName}`;
-      if (fs.existsSync(filePath) === false) {
-        socket.write(generateResponse(404, 'Not Found'));
-        socket.end();
-        return;
-      }
       
-      // Read file and return as application/octet-stream
-      const fileContent = fs.readFileSync(filePath);
-      const fileLength = Buffer.byteLength(fileContent);
-      socket.write(generateResponse(200, 'OK', {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': fileLength,
-      }, fileContent));
+      try {
+        // Read file and return as application/octet-stream
+        const fileContent = await fs.readFile(filePath);
+        const fileLength = Buffer.byteLength(fileContent);
+        socket.write(generateResponse(200, 'OK', {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': fileLength,
+        }, fileContent));
+      }
+      catch (e) {
+        console.error(e);
+        socket.write(generateResponse(404, 'Not Found'));
+      }
 
     } else if (path.startsWith("/files/") && method === 'POST') {
       const fileName = path.slice(7);
       const filePath = `${directory}/${fileName}`;
       const fileContent = lines[lines.length - 1];
-      fs.writeFileSync(filePath, fileContent);
-      socket.write(generateResponse(201, 'OK'));
+      try {
+        await fs.writeFile(filePath, fileContent);
+        socket.write(generateResponse(201, 'OK'));
+      }
+      catch (e) {
+        console.error(e);
+        socket.write(generateResponse(500, 'Internal Server Error'));
+      }
     
     } else {
       socket.write(generateResponse(404, 'Not Found'));
