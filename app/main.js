@@ -9,10 +9,7 @@ function generateResponse(statusCode, statusDescription, headers, body) {
   return response;
 }
 
-// Uncomment this to pass the first stage
 const server = net.createServer((socket) => {
-  console.log("socket: established");
-
   socket.on('data' , (data) => {
     // Parse first line as HTTP request start line
     const lines = data.toString().split('\r\n');
@@ -57,11 +54,6 @@ const server = net.createServer((socket) => {
     socket.end();
   });
 
-  socket.on("close", () => {
-    console.log("socket: on('close')");
-    socket.end();
-    server.close();
-  });
 });
 
 server.listen(4221, "localhost");
