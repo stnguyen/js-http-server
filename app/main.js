@@ -5,8 +5,19 @@ const server = net.createServer((socket) => {
   console.log("socket: established");
 
   socket.on('data' , (data) => {
-    console.log('data:', data.toString());
-    socket.write("HTTP/1.1 200 OK\r\n\r\n");
+    // Parse first line as HTTP request start line
+    const lines = data.toString().split('\r\n');
+    const startLine = lines[0];
+
+    // Parse method and path
+    const [method, path] = startLine.split(' ');
+
+    if (path === '/') {
+      socket.write("HTTP/1.1 200 OK\r\n\r\n");
+    } else {
+      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+    }
+
     socket.end();
   });
 
