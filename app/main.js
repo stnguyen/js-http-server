@@ -78,6 +78,13 @@ const server = net.createServer((socket) => {
         'Content-Length': fileLength,
       }, fileContent));
 
+    } else if (path.startsWith("/files/") && method === 'POST') {
+      const fileName = path.slice(7);
+      const filePath = `${directory}/${fileName}`;
+      const fileContent = lines[lines.length - 1];
+      fs.writeFileSync(filePath, fileContent);
+      socket.write(generateResponse(201, 'OK'));
+    
     } else {
       socket.write(generateResponse(404, 'Not Found'));
     }
