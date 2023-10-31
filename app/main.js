@@ -1,4 +1,9 @@
 const net = require("net");
+const fs = require('fs');
+
+// Read --directory
+const args = process.argv.slice(2);
+const directory = args[0];
 
 function generateResponse(statusCode, statusDescription, headers, body) {
   const statusLine = `HTTP/1.1 ${statusCode} ${statusDescription}`;
@@ -33,6 +38,7 @@ const server = net.createServer((socket) => {
     // Paths
     if (path === '/') {
       socket.write(generateResponse(200, 'OK'));
+
     } else if (path.startsWith("/echo/")) {
       const msg = path.slice(6);
       const msgLength = Buffer.byteLength(msg, "utf8");
@@ -40,6 +46,7 @@ const server = net.createServer((socket) => {
         'Content-Type': 'text/plain',
         'Content-Length': msgLength,
       }, msg));
+
     } else if (path === '/user-agent') {
       const msg = headers['user-agent'];
       const msgLength = Buffer.byteLength(msg, "utf8");
@@ -47,6 +54,18 @@ const server = net.createServer((socket) => {
         'Content-Type': 'text/plain',
         'Content-Length': msgLength,
       }, msg));
+
+    } else if (path.startsWith("/files/") && method === 'GET') {
+      const fileName = path.slice(7);
+      const filePath = `${directory}/${fileName}`;
+      // Read file and return as application/octet-stream
+      const fileContent = fs.readFileSync(filePath);
+      const fileLength = Buffer.byteLength(fileContent);
+      socket.write(generateResponse(200, 'OK', {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileLength,
+      }, fileContent));
+
     } else {
       socket.write(generateResponse(404, 'Not Found'));
     }
