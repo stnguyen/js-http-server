@@ -7,7 +7,9 @@ console.log("Logs from your program will appear here!");
 const server = net.createServer((socket) => {
   console.log("connection established");
   socket.on('data' , (data) => {
-    console.log(data.toString());
+    console.log('data:', data.toString());
+  });
+  socket.on('end' , () => {
     socket.write("HTTP/1.1 200 OK\r\n\r\n");
   });
   socket.on("close", () => {
